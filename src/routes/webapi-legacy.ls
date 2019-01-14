@@ -7,6 +7,9 @@
 require! <[path zlib express]>
 moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
+{constants} = require \../common/definitions
+{APPEVT_TIME_SERIES_V1_DATA_POINTS} = constants
+
 
 NG = (message, code, status-code, req, res) ->
   url = req.originalUrl
@@ -95,6 +98,7 @@ module.exports = exports =
     module.context = context
     hub = new express!
     hub.post '/:id/:profile', (UPLOAD.single \sensor_data_gz), (req, res) ->
+      received = (new Date!) - 0
       {file, params, query} = req
       {id, profile} = params
       return NG "invalid file upload form", -1, 400, req, res unless file?
@@ -110,16 +114,18 @@ module.exports = exports =
       time = PARSE_TIMESTAMP 1, filename, profile, id, tz, req
       diff = now - (time - 0)
       text = "#{diff}"
-      INFO "#{req.originalUrl.yellow}: #{filename} (#{mimetype}) with #{bytes} bytes (time => #{time.format 'YYYY/MM/DD HH:mm:ss'}; diff => #{text.magenta}; local => #{req.query.local})"
+      DBG "#{req.originalUrl.yellow}: #{filename} (#{mimetype}) with #{bytes} bytes (time => #{time.format 'YYYY/MM/DD HH:mm:ss'}; diff => #{text.magenta}; local => #{req.query.local})"
 
-      return PROCESS_EMPTY_DATA id, profile, originalname, req, res if size is 0
+      return PROCESS_EMPTY_DATA id, profile, filename, req, res if size is 0
       (zerr, raw) <- zlib.gunzip buffer
-      return PROCESS_CORRUPT_COMPRESSED_DATA id, profile, originalname, zerr, req, res if zerr?
-      (jerr, json) <- PARSE_JSON raw
-      return PROCESS_CORRUPT_JSON_DATA id, profile, originalname, jerr, req, res if jerr?
-
-      INFO "#{req.originalUrl.yellow}: #{filename} decompressed to #{raw.length} bytes"
+      return PROCESS_CORRUPT_COMPRESSED_DATA id, profile, filename, zerr, req, res if zerr?
+      (jerr, data) <- PARSE_JSON raw
+      return PROCESS_CORRUPT_JSON_DATA id, profile, filename, jerr, req, res if jerr?
       res.status 200 .json { code: 0, message: null, result: {id, profile, filename, bytes} }
+      {items} = data
+      DBG "#{req.originalUrl.yellow}: #{filename} decompressed to #{raw.length} bytes, with #{items.length} points"
+      return context.emit APPEVT_TIME_SERIES_V1_DATA_POINTS, profile, id, filename, items, bytes, raw.length, received
+
     web.use-api \hub, hub, 1
     return done!
 

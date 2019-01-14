@@ -17,3 +17,20 @@ logger:
     period: daily
     threshold: 1g     # The maximum size for a log file to reach before it's rotated.
     totalFiles: 60    # Keep 60 days (2 months) of log files.
+
+
+http-csv:
+  verbose: true
+  destinations:
+
+    - name: local
+      url: http://localhost:7000/next3
+      profile-match: '*'
+      id-match: '*'
+      user-agent: hello/1.0
+
+    - name: local2
+      url: http://localhost:3001/x/y/z
+      profile-match: '*'
+      id-match: '*'
+      user-agent: hello/1.0
