@@ -4,11 +4,10 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path zlib async request handlebars]>
-moment = require \moment-timezone
+require! <[path async lodash]>
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
-{APPEVT_TIME_SERIES_V1_DATA_POINTS} = constants
+{APPEVT_TIME_SERIES_V1_DATA_POINTS, APPEVT_TIME_SERIES_V3_MEASUREMENTS} = constants
 
 const ONE_MONTH = 30 * 24 * 60 * 60 * 1000
 const ONE_HOUR = 60 * 60 * 1000
@@ -46,6 +45,13 @@ class DataNode
     xs = ["#{updated_at}", p] ++ pairs
     return xs.join '\t'
 
+  serialize-v3: ->
+    {updated_at, p, kvs} = self = @
+    field_set = { [k, v.value] for k, v of kvs }
+    [p_type, p_id, s_type, s_id] = p.split '/'
+    epoch = updated_at
+    return [epoch, p_type, p_id, s_type, s_id, field_set]
+
 
 class DataAggregatorV3
   (@profile, @id, @verbose=no) ->
@@ -80,8 +86,8 @@ class DataAggregatorV3
 
   serialize: ->
     {pathes} = self = @
-    xs = [ (p.serialize!) for k, p of pathes ]
-    return xs
+    return [ (node.serialize-v3!) for p, node of pathes ]
+
 
 
 class DataItemV1
@@ -128,50 +134,19 @@ class DataItemV1
     return yes
     # [TODO]
     # 1. ignore when the value isn't changed, for past 60 seconds
-    # 2. aggregate the last one value
-    # 3. transform to new schema
-    # 4. chain to next server
+    # 2. transform to new schema
+    # 3. chain to next server
 
   to-array: ->
     {board_type, board_id, sensor, data_type, updated_at, value, time_shifts} = self = @
     return [updated_at, board_type, board_id, sensor, data_type, value, time_shifts]
 
 
-class Forwarder
-  (@parent, @configs) ->
-    self = @
-    {url} = configs
-    im = configs['id-match']
-    im = \* unless im? and \string is typeof im
-    pm = configs['profile-match']
-    pm = \* unless pm? and \string is typeof pm
-    self.id-matcher = if \* is im then /.*/ else new RegExp im
-    self.profile-matcher = if \* is pm then /.*/ else new RegExp pm
-    self.url = url
-    self.user-agent = configs['user-agent']
-    self.user-agent = "tic-sensor-hub/0.1" unless self.user-agent?
-    return
-
-  forward: (profile, id, csv-buffer, gz-buffer) ->
-    {id-matcher, profile-matcher, url, user-agent} = self = @
-    return unless profile-matcher.test profile
-    return unless id-matcher.test id
-    form-data =
-      sensor_csv_gz:
-        value: gz-buffer
-        options: {filename: "/tmp/#{profile}-#{id}.csv.gz", contentType: 'application/gzip'}
-    qs = {profile, id}
-    (err, rsp, body) <- request.post {url, qs, form-data}
-    return ERR err, "failed to send to #{url}" if err?
-    return ERR "unexpected return code: #{rsp.statusCode}, for #{url}, body => #{body}" unless rsp.statusCode is 200
-
-
-class Broker
+class Transform
   (@environment, @configs, @helpers, @app) ->
     self = @
     self.verbose = configs.verbose
     self.verbose = no unless \boolean is typeof self.verbose
-    self.forwarders = [ (new Forwarder self, d) for d in configs.destinations ]
     return
 
   init: (done) ->
@@ -179,25 +154,29 @@ class Broker
     app.on APPEVT_TIME_SERIES_V1_DATA_POINTS, -> self.at-ts-v1-points.apply self, arguments
     return done!
 
-  ##
-  # profile,
-  # id,
-  # filename, the original filename in HTTP Form
-  # items, the `items` field of json object
-  # bytes, the size of serialized json object (in bytes)
-  # received, the timestamp (in ms) when the http request is received
-  #
-  at-ts-v1-points: (profile, id, filename, items, json-gz-bytes, json-bytes, received) ->
-    {configs, verbose, forwarders} = self = @
+  at-ts-v1-points: (profile, id, items, context) ->
+    {app, verbose, forwarders} = self = @
+    return unless items? and Array.isArray items and items.length > 0
+    {received} = context.timestamps
+
     xs = [ (new DataItemV1 profile, id, i, verbose) for i in items ]
     ys = [ (x.to-array!) for x in xs when x.is-broadcastable! ]
-    transformed = (new Date!) - 0
-    duration = transformed - received
-    metadata = {profile, id, received, transformed, duration}
     da = new DataAggregatorV3 profile, id, verbose
     da.update ys
-    ds = da.serialize!
-    ds = ["#\t#{(JSON.stringify metadata)}"] ++ ds
+    measurements = da.serialize yes
+
+    ctx = lodash.merge {}, context
+    transformed = ctx.timestamps.transformed = (new Date!) - 0
+    duration = transformed - received
+
+    {filename, compressed-size} = context.upload
+    num_of_items = "#{items.length}"
+    num_of_measurements = "#{measurements.length}"
+    compressed = "#{compressed-size}"
+    INFO "#{profile.cyan}/#{id.yellow}/#{filename.green} => from #{num_of_items.red} items to #{num_of_measurements.magenta} measurements. (json.gz: #{compressed.blue} bytes)" if verbose
+    return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, ctx
+
+    /*
     if verbose
       [ console.log "\t#{d}" for d in ds ]
     data = ds.join '\n'
@@ -214,15 +193,16 @@ class Broker
     for f in forwarders
       f.forward profile, id, csv-buffer, gz-buffer
     return
+    */
 
 
 
 module.exports = exports =
-  name: \http-csv
+  name: \1to3
 
   attach: (name, environment, configs, helpers) ->
     app = @
-    broker = app[name] = new Broker environment, configs, helpers, app
+    broker = app[name] = new Transform environment, configs, helpers, app
     return null
 
   init: (p, done) ->

@@ -124,7 +124,14 @@ module.exports = exports =
       res.status 200 .json { code: 0, message: null, result: {id, profile, filename, bytes} }
       {items} = data
       DBG "#{req.originalUrl.yellow}: #{filename} decompressed to #{raw.length} bytes, with #{items.length} points"
-      return context.emit APPEVT_TIME_SERIES_V1_DATA_POINTS, profile, id, filename, items, bytes, raw.length, received
+
+      compressed-size = bytes
+      raw-size = raw.length
+      measured = time
+      return context.emit APPEVT_TIME_SERIES_V1_DATA_POINTS, profile, id, items, do
+        source: \toe1-upload
+        upload: {filename, compressed-size, raw-size}
+        timestamps: {measured, received}
 
     web.use-api \hub, hub, 1
     return done!

@@ -19,18 +19,9 @@ logger:
     totalFiles: 60    # Keep 60 days (2 months) of log files.
 
 
-http-csv:
-  verbose: true
-  destinations:
-
-    - name: local
-      url: http://localhost:7000/next3
-      profile-match: '*'
-      id-match: '*'
-      user-agent: hello/1.0
-
-    - name: local2
-      url: http://localhost:3001/x/y/z
-      profile-match: '*'
-      id-match: '*'
-      user-agent: hello/1.0
+#
+# Transform from DGv1 schema (board_type/board_id/sensor: type) to
+# DGv3 schema (p_type/p_id/s_type/s_id: {type1, type2, ...})
+#
+1to3:
+  verbose: false

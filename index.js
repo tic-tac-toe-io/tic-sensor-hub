@@ -47,7 +47,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
          * Configure master app (load-balancer) here.
          */
         master.addPlugin(require('./src/routes/webapi-legacy'));
-        master.addPlugin(require('./src/brokers/http-csv'));
+        master.addPlugin(require('./src/transforms/1to3'));
         /**
          * Start service in the process of master app.
          */
