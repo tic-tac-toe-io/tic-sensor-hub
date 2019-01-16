@@ -127,7 +127,7 @@ module.exports = exports =
 
       compressed-size = bytes
       raw-size = raw.length
-      measured = time
+      measured = time.valueOf!
       return context.emit APPEVT_TIME_SERIES_V1_DATA_POINTS, profile, id, items, do
         source: \toe1-upload
         upload: {filename, compressed-size, raw-size}

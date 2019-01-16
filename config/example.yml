@@ -25,3 +25,30 @@ logger:
 #
 1to3:
   verbose: false
+
+
+#
+# Use `request` module to forward Time-series data points (measurements) to
+# next http server. There are 2 ways of using HTTP POST to send these data
+# points to next http server:
+#
+# 1. Send as HTTP body in JSON format without GZ compression.
+# 2. Send sa a JSON file in HTTP Form (multiparts) with GZ compression.
+#
+http-forwarder:
+  verbose: false
+  destinations:
+    - name: local
+      enabled: true
+      url: http://localhost:9999/a/b/c
+      compressed: false
+      request_opts:
+        auth: {user: 'aaa', password: 'bbbb'}
+
+    - name: remote
+      enabled: false
+      url: https://xyz.com/w/u/v
+      compressed: true
+      request_opts:
+        qs: {token: 'XXX'}
+
