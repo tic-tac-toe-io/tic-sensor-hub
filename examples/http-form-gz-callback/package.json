@@ -1,0 +1,24 @@
+{
+  "name": "http-form-gz-callback",
+  "author": {
+    "name": [
+      "Yagamy"
+    ],
+    "email": "yagamy@t2t.io"
+  },
+  "description": "An example of using express-js to write a REST endpoint to receive data callback from TIC SensorHub (http-forwarder), with compressed json format",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index",
+  "dependencies": {
+    "express": "*",
+    "multer": "*",
+    "colors": "*",
+    "prettyjson": "*"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}

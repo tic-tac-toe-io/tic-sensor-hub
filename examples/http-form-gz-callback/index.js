@@ -3,13 +3,15 @@
 
 var http = require('http');
 var util = require('util');
+var zlib = require('zlib');
 var colors = require('colors');
 var express = require('express');
-var bodyParser = require('body-parser');
+var multer = require('multer');
 var prettyjson = require('prettyjson');
 
 const HOST = '0.0.0.0';
-const PORT = 9999;
+const PORT = 9998;
+const UPLOAD_NAME = 'sensor_json_gz';
 
 var DUMP = function (json) {
     var text = prettyjson.render(json, { inlineArrays: true, defaultIndentation: 4 });
@@ -17,6 +19,7 @@ var DUMP = function (json) {
     lines.forEach(l => {
         console.log(`\t${l}`);
     });
+    console.log("\t--------");
 };
 
 var DUMP_MEASUREMENTS = function (measurements) {
@@ -29,16 +32,28 @@ var DUMP_MEASUREMENTS = function (measurements) {
     });
 };
 
-var parser = bodyParser.json();
+var upload = multer({ storage: multer.memoryStorage() });
 
 var web = express();
 web.set('trust proxy', true);
-web.post('/a/b/c', parser, (req, res) => {
-    var { profile, id, timestamp } = req.query;
-    var { measurements, context } = req.body;
-    console.log(`json-body: ${req.originalUrl.yellow}: ${req.headers['content-length']} bytes`);
-    DUMP(context)
-    DUMP_MEASUREMENTS(measurements);
+web.post('/x/y/z', upload.single(UPLOAD_NAME), (req, res) => {
+    var { query, file } = req;
+    var { profile, id, timestamp } = query;
+    var { fieldname, originalname, size, buffer } = file;
+    console.log(`multiparts-upload: ${req.originalUrl.yellow}: ${req.headers['content-length']} bytes`);
+    zlib.gunzip(buffer, (zerr, raw) => {
+        if (zerr) {
+            return console.log(`failed to decompress archive ${profile}/${id}/${timestamp}, zerr: ${zerr}`);
+        }
+        var text = raw.toString();
+        var data = JSON.parse(text);
+        var { measurements, context } = data;
+        console.log(`\tcompressed: ${buffer.length}, decompressed: ${raw.length} bytes`);
+        console.log(`\t--------`);
+        DUMP({ fieldname, originalname, size });
+        DUMP(context)
+        DUMP_MEASUREMENTS(measurements);
+    });
     res.status(200).end();
 });
 

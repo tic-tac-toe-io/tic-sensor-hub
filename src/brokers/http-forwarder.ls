@@ -4,7 +4,8 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path async lodash request]>
+require! <[path zlib]> # builtin
+require! <[async lodash request]>
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
 {APPEVT_TIME_SERIES_V1_DATA_POINTS, APPEVT_TIME_SERIES_V3_MEASUREMENTS} = constants
@@ -21,10 +22,10 @@ class DataPack
     {data, data-raw, data-compressed} = self = @
     return done null, data-compressed if compressed and data-compressed?
     return done null, data if not compressed
-    (err, z) <- zlib.gzip data
+    (err, z) <- zlib.gzip data-raw
     return done err if err?
     self.data-compressed = z
-    self.ratio = (z.length * 100 / data.length).toFixed 2
+    self.ratio = (z.length * 100 / data-raw.length).toFixed 2
     return done null, z
 
 
@@ -42,7 +43,6 @@ class Forwarder
     {prefix, compressed, url, request_opts} = self = @
     {profile, id, measurements, context} = pack
     timestamp = context.timestamps.measured
-    timestamp = (new Date timestamp) - 0
     num_of_measurements = "#{measurements.length}"
     method = \POST
     qs = {profile, id, timestamp}
@@ -52,9 +52,14 @@ class Forwarder
     INFO "opts: #{JSON.stringify opts}"
     (pack-err, data) <- pack.get-data compressed
     return done pack-err if pack-err?
+    {ratio} = pack
+    # INFO "ratio: #{ratio.magenta}"
     bytes = "#{data.length}"
     if compressed
-      INFO "..."
+      opts['formData'] = do
+        sensor_json_gz:
+          value: data
+          options: {filename: "/tmp/#{profile}-#{id}-#{timestamp}.json.gz", contentType: 'application/gzip'}
     else
       opts['body'] = data
       opts['headers'] = {'content-type': 'application/json'}
@@ -63,7 +68,6 @@ class Forwarder
     return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode}" unless rsp.statusCode is 200
     INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)"
     return done!
-
 
 
 class ForwardManager
@@ -87,46 +91,6 @@ class ForwardManager
       ERR err, "forwarding failure" if err?
     return
 
-/*
-  at-ts-v1-points: (profile, id, items, context) ->
-    {app, verbose, forwarders} = self = @
-    return unless items? and Array.isArray items and items.length > 0
-    {received} = context.timestamps
-
-    xs = [ (new DataItemV1 profile, id, i, verbose) for i in items ]
-    ys = [ (x.to-array!) for x in xs when x.is-broadcastable! ]
-    da = new DataAggregatorV3 profile, id, verbose
-    da.update ys
-    measurements = da.serialize yes
-
-    ctx = lodash.merge {}, context
-    transformed = ctx.timestamps.transformed = (new Date!) - 0
-    duration = transformed - received
-
-    {filename, compressed-size} = context.upload
-    num_of_items = "#{items.length}"
-    num_of_measurements = "#{measurements.length}"
-    compressed = "#{compressed-size}"
-    INFO "#{profile.cyan}/#{id.yellow}/#{filename.green} => from #{num_of_items.red} items to #{num_of_measurements.magenta} measurements. (json.gz: #{compressed.blue} bytes)" if verbose
-    return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, ctx
-
-    if verbose
-      [ console.log "\t#{d}" for d in ds ]
-    data = ds.join '\n'
-    csv-bytes = data.length
-    ratio = (csv-bytes * 100 / json-bytes).toFixed 2
-    json-gz-bytes = "#{json-gz-bytes}"
-    json-bytes = "#{json-bytes}"
-    csv-bytes = "#{data.length}"
-    INFO "#{profile.cyan}/#{id.yellow}/#{filename.green} => text compact from #{json-bytes.magenta} to #{csv-bytes.magenta} bytes (#{ratio.red}%)"
-    csv-buffer = new Buffer data
-    (err, gz-buffer) <- zlib.gzip csv-buffer
-    csv-gz-bytes = "#{gz-buffer.length}"
-    INFO "#{profile.cyan}/#{id.yellow}/#{filename.green} => archive compact from #{json-gz-bytes.magenta} to #{csv-gz-bytes.magenta} bytes (#{ratio.red}%)"
-    for f in forwarders
-      f.forward profile, id, csv-buffer, gz-buffer
-    return
-*/
 
 
 module.exports = exports =

@@ -39,15 +39,16 @@ http-forwarder:
   verbose: false
   destinations:
     - name: local
-      enabled: true
+      enabled: false
       url: http://localhost:9999/a/b/c
       compressed: false
       request_opts:
         auth: {user: 'aaa', password: 'bbbb'}
 
     - name: remote
-      enabled: false
-      url: https://xyz.com/w/u/v
+      enabled: true
+      # url: https://xyz.com/w/u/v
+      url: http://localhost:9998/x/y/z
       compressed: true
       request_opts:
         qs: {token: 'XXX'}
