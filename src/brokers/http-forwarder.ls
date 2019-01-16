@@ -49,7 +49,6 @@ class Forwarder
     json = if compressed then no else yes
     c = if compressed then "json.gz" else "json"
     opts = lodash.merge {}, request_opts, {method, json, url, qs}
-    INFO "opts: #{JSON.stringify opts}"
     (pack-err, data) <- pack.get-data compressed
     return done pack-err if pack-err?
     {ratio} = pack
