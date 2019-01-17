@@ -62,7 +62,9 @@ http-forwarder:
       # url: https://xyz.com/w/u/v
       url: http://localhost:9998/x/y/z
       compressed: true
-      health_check: false
+      matched_profiles: '*'
+      matched_ids: '1803S320004[0-9]'
+      health_check: true
       url_append: true
       request_opts:
         qs: {token: 'XXX'}

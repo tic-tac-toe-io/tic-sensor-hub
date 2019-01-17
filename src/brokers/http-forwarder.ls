@@ -17,7 +17,11 @@ const FORWARDER_DEFAULT_OPTIONS =
   compressed: no
   health_check: no
   url_append: no
+  matched_profiles: '.*'
+  matched_ids: '.*'
   request_opts: {}
+
+const DEFAULT_HEALTH_CHECK_PERIOD = 60s
 
 
 class DataPack
@@ -40,12 +44,23 @@ class DataPack
 
 class Forwarder
   (@manager, @opts, @verbose) ->
-    {name, url, compressed} = @opts = lodash.merge {}, FORWARDER_DEFAULT_OPTIONS, opts
+    {name, url, compressed, health_check, matched_profiles, matched_ids} = @opts = lodash.merge {}, FORWARDER_DEFAULT_OPTIONS, opts
     @name = name
     @prefix = "forwarders[#{name.cyan}]"
+    @url = url
     @compressed = compressed
     @compressed = no unless @compressed? and \boolean is typeof @compressed
-    @url = url
+    @health-check = health_check
+    @health-check = no unless @health-check? and \boolean is typeof @health-check
+    @health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
+    @health-checking = no
+    @healthy = if @health-check then no else yes
+    matched_profiles = '.*' unless matched_profiles? and \string is typeof matched_profiles
+    matched_profiles = '.*' if matched_profiles is \*
+    matched_ids = '.*' unless matched_ids? and \string is typeof matched_ids
+    matched_ids = '.*' if matched_ids is \*
+    @profile-matcher = if matched_profiles is \.* then null else new RegExp matched_profiles
+    @id-matcher = if matched_ids is \.* then null else new RegExp matched_ids
     return
 
   init: (done) ->
@@ -53,12 +68,46 @@ class Forwarder
     return done "missing url in options" unless url?
     return done "expects url as `string` but #{typeof url}" unless \string is typeof url
     INFO "#{prefix}: initialized. (url: #{url.magenta})"
+    f = -> return self.at-check!
+    self.timer = setInterval f, 1000ms
+    self.health-check-timeout = 0
+    self.at-health-check!
     return done!
 
+  at-health-check: ->
+    {prefix, url, health-check, health-check-timeout, healthy, health-checking} = self = @
+    return unless health-check
+    return if health-checking
+    self.health-check-timeout = health-check-timeout - 1
+    return if health-check-timeout > 0
+    timeout = DEFAULT_HEALTH_CHECK_PERIOD .>>. 1
+    timeout = 10 if timeout < 10
+    method = \OPTIONS
+    INFO "#{prefix}: checking healthy..."
+    self.health-checking = yes
+    (err, rsp, body) <- request {url, timeout, method}
+    self.health-checking = no
+    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
+    return WARN "#{prefix}: using OPTIONS to check #{url}, but failed: #{err}" if err?
+    return WARN "#{prefix}: using OPTIONS to check #{url}, but failed with non-200 response: #{rsp.statusCode} (#{rsp.statusMessage.red})" unless rsp.statusCode is 200
+    self.healthy = yes
+    return INFO "#{prefix}: using OPTIONS to check #{url} and success"
+
+  at-check: ->
+    @.at-health-check!
+    return
+
   forward: (pack, done) ->
-    {prefix, compressed, url, opts, verbose} = self = @
+    {prefix, compressed, url, opts, verbose, healthy, profile-matcher, id-matcher} = self = @
     {profile, id, measurements, context} = pack
+    # INFO "testing #{profile}, #{profile-matcher.test profile}" if profile-matcher?
+    # INFO "testing #{id}, #{id-matcher.test id}" if id-matcher?
+    return DBG "#{prefix}: drop #{profile}/#{id} because of profile mismatch" if profile-matcher? and (not profile-matcher.test profile)
+    return DBG "#{prefix}: drop #{profile}/#{id} because of id mismatch" if id-matcher? and not id-matcher.test id
     timestamp = context.timestamps.measured
+    if not healthy
+      INFO "#{prefix}: #{url.gray} is not healthy to forward #{profile}/#{id}/#{timestamp}"
+      return done!
     num_of_measurements = "#{measurements.length}"
     method = \POST
     qs = {profile, id, timestamp}
@@ -82,10 +131,23 @@ class Forwarder
       opts['body'] = data
       opts['headers'] = {'content-type': 'application/json'}
     (http-err, rsp, body) <- request opts
-    return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} => #{http-err}" if http-err?
-    return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})" unless rsp.statusCode is 200
+    return self.at-forward-ng done, "failed to send #{profile}/#{id}/#{timestamp} data to #{url} => #{http-err}" if http-err?
+    return self.at-forward-ng done, "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})" unless rsp.statusCode is 200
     INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
-    return done!
+    return self.at-forward-ok done
+
+  at-forward-ng: (callback, err) ->
+    {health-check} = self = @
+    return callback err unless health-check
+    self.healthy = no
+    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
+    return callback err
+
+  at-forward-ok: (callback) ->
+    self = @
+    self.healthy = yes
+    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
+    return callback!
 
 
 class ForwardManager

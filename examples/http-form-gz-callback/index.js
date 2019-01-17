@@ -77,6 +77,15 @@ web.post('/x/y/z/:profile/:id', upload.single(UPLOAD_NAME), (req, res) => {
     res.status(200).end();
 });
 
+/**
+ * To indicate SensorHub that the service is alive to receive http forwarding sensor
+ * data.
+ */
+web.options('/x/y/z', (req, res) => {
+    console.log(`healthy check from ${req.ip}`);
+    res.status(200).end();
+});
+
 var server = http.createServer(web);
 server.on('listening', () => {
     console.log(`listening ${HOST}:${PORT}`);
