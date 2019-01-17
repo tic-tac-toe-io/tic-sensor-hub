@@ -82,10 +82,12 @@ class Forwarder
     return if health-check-timeout > 0
     timeout = DEFAULT_HEALTH_CHECK_PERIOD .>>. 1
     timeout = 10 if timeout < 10
+    timeout = timeout * 1000ms
     method = \OPTIONS
-    INFO "#{prefix}: checking healthy..."
+    opts = {url, method, timeout}
+    INFO "#{prefix}: checking healthy... (#{JSON.stringify opts})"
     self.health-checking = yes
-    (err, rsp, body) <- request {url, timeout, method}
+    (err, rsp, body) <- request opts
     self.health-checking = no
     self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
     return WARN "#{prefix}: using OPTIONS to check #{url}, but failed: #{err}" if err?
