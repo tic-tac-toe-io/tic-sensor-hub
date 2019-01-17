@@ -83,7 +83,7 @@ class Forwarder
       opts['headers'] = {'content-type': 'application/json'}
     (http-err, rsp, body) <- request opts
     return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} => #{http-err}" if http-err?
-    return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode}" unless rsp.statusCode is 200
+    return done "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})" unless rsp.statusCode is 200
     INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
     return done!
 

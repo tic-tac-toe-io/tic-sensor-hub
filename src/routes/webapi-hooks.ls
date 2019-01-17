@@ -27,9 +27,10 @@ module.exports = exports =
     {web} = app = @
     {REST_ERR, REST_DAT, UPLOAD} = web.get_rest_helpers!
     hook = new express!
-    hook.post '/http-forwarder/compressed', (UPLOAD.single \sensor_json_gz), (req, res) ->
+    hook.post '/http-forwarder/:profile/:id', (UPLOAD.single \sensor_json_gz), (req, res) ->
       {file, params, query} = req
-      {id, profile, timestamp} = query
+      {profile, id} = params
+      {timestamp} = query
       return NG "invalid file upload form", -1, 400, req, res unless file?
       {fieldname, originalname, size, buffer, mimetype} = file
       return NG "missing sensor_json_gz field", -1, 400, req, res unless fieldname == \sensor_json_gz
@@ -37,6 +38,7 @@ module.exports = exports =
       file.buffer = null
       filename = originalname
       bytes = buffer.length
+      res.status 200 .json { code: 0, message: null, result: {profile, id, filename, bytes} }
 
       (err, raw) <- zlib.gunzip buffer
       return NG "failed to decompress: #{err}", -1, 200, req, res if err?
@@ -46,7 +48,7 @@ module.exports = exports =
       catch error
         return NG "failed to parse json text: #{error}", -2, 200, req, res
       {measurements, context} = data
-      INFO "#{req.originalUrl.yellow}: #{filename} (#{bytes} bytes) decompressed to #{raw.length} bytes, with #{measurements.length} measurements"
+      INFO "#{req.path.yellow}: #{filename} (#{bytes} bytes) decompressed to #{raw.length} bytes, with #{measurements.length} measurements"
       return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, context
 
     web.use-api \hook, hook
