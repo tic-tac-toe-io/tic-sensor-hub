@@ -27,6 +27,11 @@ module.exports = exports =
     {web} = app = @
     {REST_ERR, REST_DAT, UPLOAD} = web.get_rest_helpers!
     hook = new express!
+
+    hook.options '/http-forwarder/', (req, res) ->
+      INFO "#{req.originalUrl.yellow}: health check from #{req.ip}"
+      return res.status 200 .end!
+
     hook.post '/http-forwarder/:profile/:id', (UPLOAD.single \sensor_json_gz), (req, res) ->
       {file, params, query} = req
       {profile, id} = params
