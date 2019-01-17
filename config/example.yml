@@ -38,18 +38,31 @@ logger:
 http-forwarder:
   verbose: false
   destinations:
-    - name: local
+    - name: test1
       enabled: false
       url: http://localhost:9999/a/b/c
       compressed: false
+      health_check: false
+      url_append: false
       request_opts:
         auth: {user: 'aaa', password: 'bbbb'}
 
-    - name: remote
+    - name: test2
+      enabled: false
+      # url: https://xyz.com/w/u/v
+      url: http://localhost:9998/x/y/z
+      compressed: true
+      health_check: false
+      url_append: false
+      request_opts:
+        qs: {token: 'XXX'}
+
+    - name: test3
       enabled: true
       # url: https://xyz.com/w/u/v
       url: http://localhost:9998/x/y/z
       compressed: true
+      health_check: false
+      url_append: true
       request_opts:
         qs: {token: 'XXX'}
-

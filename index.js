@@ -47,6 +47,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
          * Configure master app (load-balancer) here.
          */
         master.addPlugin(require('./src/routes/webapi-legacy'));
+        master.addPlugin(require('./src/routes/webapi-hooks'));
         master.addPlugin(require('./src/transforms/1to3'));
         master.addPlugin(require('./src/brokers/http-forwarder'));
         /**

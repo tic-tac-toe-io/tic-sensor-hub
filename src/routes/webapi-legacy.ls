@@ -123,7 +123,7 @@ module.exports = exports =
       return PROCESS_CORRUPT_JSON_DATA id, profile, filename, jerr, req, res if jerr?
       res.status 200 .json { code: 0, message: null, result: {id, profile, filename, bytes} }
       {items} = data
-      DBG "#{req.originalUrl.yellow}: #{filename} decompressed to #{raw.length} bytes, with #{items.length} points"
+      INFO "#{req.originalUrl.yellow}: #{filename} decompressed to #{raw.length} bytes, with #{items.length} points"
 
       compressed-size = bytes
       raw-size = raw.length

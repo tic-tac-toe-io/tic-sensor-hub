@@ -12,6 +12,9 @@ var prettyjson = require('prettyjson');
 const HOST = '0.0.0.0';
 const PORT = 9998;
 const UPLOAD_NAME = 'sensor_json_gz';
+// const PATH = '/api/v3/hook/http-forwarder/compressed';
+const PATH1 = '/x/y/z';
+const PATH2 = '/x/y/z/:profile/:id';
 
 var DUMP = function (json) {
     var text = prettyjson.render(json, { inlineArrays: true, defaultIndentation: 4 });
@@ -36,9 +39,32 @@ var upload = multer({ storage: multer.memoryStorage() });
 
 var web = express();
 web.set('trust proxy', true);
-web.post('/x/y/z', upload.single(UPLOAD_NAME), (req, res) => {
+
+web.post(PATH1, upload.single(UPLOAD_NAME), (req, res) => {
     var { query, file } = req;
     var { profile, id, timestamp } = query;
+    var { fieldname, originalname, size, buffer } = file;
+    console.log(`multiparts-upload: ${req.originalUrl.yellow}: ${req.headers['content-length']} bytes`);
+    zlib.gunzip(buffer, (zerr, raw) => {
+        if (zerr) {
+            return console.log(`failed to decompress archive ${profile}/${id}/${timestamp}, zerr: ${zerr}`);
+        }
+        var text = raw.toString();
+        var data = JSON.parse(text);
+        var { measurements, context } = data;
+        console.log(`\tcompressed: ${buffer.length}, decompressed: ${raw.length} bytes`);
+        console.log(`\t--------`);
+        DUMP({ fieldname, originalname, size });
+        DUMP(context)
+        DUMP_MEASUREMENTS(measurements);
+    });
+    res.status(200).end();
+});
+
+web.post(PATH2, upload.single(UPLOAD_NAME), (req, res) => {
+    var { query, file, params } = req;
+    var { profile, id } = params;
+    var { timestamp } = query;
     var { fieldname, originalname, size, buffer } = file;
     console.log(`multiparts-upload: ${req.originalUrl.yellow}: ${req.headers['content-length']} bytes`);
     zlib.gunzip(buffer, (zerr, raw) => {
