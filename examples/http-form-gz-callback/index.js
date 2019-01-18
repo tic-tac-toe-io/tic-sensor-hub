@@ -73,6 +73,9 @@ web.post('/x/y/z/:profile/:id', upload.single(UPLOAD_NAME), (req, res) => {
         DUMP({ fieldname, originalname, size });
         DUMP(context)
         DUMP_MEASUREMENTS(measurements);
+        console.log(`\t--------`);
+        console.log(JSON.stringify(data));
+        console.log(`\t--------`);
     });
     res.status(200).end();
 });
