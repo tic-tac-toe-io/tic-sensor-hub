@@ -108,7 +108,7 @@ class Forwarder
     return DBG "#{prefix}: drop #{profile}/#{id} because of id mismatch" if id-matcher? and not id-matcher.test id
     timestamp = context.timestamps.measured
     if not healthy
-      INFO "#{prefix}: #{url.gray} is not healthy to forward #{profile}/#{id}/#{timestamp}"
+      DBG "#{prefix}: #{url.gray} is not healthy to forward #{profile}/#{id}/#{timestamp}"
       return done!
     num_of_measurements = "#{measurements.length}"
     method = \POST
