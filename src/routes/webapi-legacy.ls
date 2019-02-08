@@ -4,11 +4,15 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path zlib express]>
+require! <[path zlib lodash express]>
 moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
 {APPEVT_TIME_SERIES_V1_DATA_POINTS} = constants
+
+
+DEFAULT_SETTINGS =
+  enabled: no
 
 
 NG = (message, code, status-code, req, res) ->
@@ -90,9 +94,16 @@ module.exports = exports =
   name: \webapi-legacy
 
   attach: (name, environment, configs, helpers) ->
+    INFO "configs => #{JSON.stringify configs}"
+    module.configs = lodash.merge {}, DEFAULT_SETTINGS, configs
     return <[web]>
 
   init: (p, done) ->
+    {configs} = module
+    {enabled} = configs
+    if not enabled
+      WARN "disabled!!"
+      return done!
     {web} = context = @
     {REST_ERR, REST_DAT, UPLOAD} = web.get_rest_helpers!
     module.context = context

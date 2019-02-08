@@ -28,6 +28,13 @@ logger:
 
 
 #
+# Legacy REST api for TOE v1.0: `/api/v1/hub/:id/:profile` (POST)
+#
+webapi-legacy:
+  enabled: false
+
+
+#
 # Use `request` module to forward Time-series data points (measurements) to
 # next http server. There are 2 ways of using HTTP POST to send these data
 # points to next http server:
@@ -48,18 +55,18 @@ http-forwarder:
         auth: {user: 'aaa', password: 'bbbb'}
 
     - name: test2
-      enabled: false
-      # url: https://xyz.com/w/u/v
+      enabled: true
       url: http://localhost:9998/x/y/z
       compressed: true
+      matched_profiles: 'foop'
+      matched_ids: '*'
       health_check: false
-      url_append: false
+      url_append: true
       request_opts:
         qs: {token: 'XXX'}
 
     - name: test3
-      enabled: true
-      # url: https://xyz.com/w/u/v
+      enabled: false
       url: http://localhost:9998/x/y/z
       compressed: true
       matched_profiles: '*'
