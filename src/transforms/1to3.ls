@@ -76,8 +76,11 @@ class DataAggregatorV3
       #
       p_type = board_type
       p_id = board_id
-      s_type = sensor
-      s_id = \0
+      if -1 is sensor.indexOf ':'
+        s_type = sensor
+        s_id = \0
+      else
+        [s_type, s_id] = sensor.split ':'
       p = "#{p_type}/#{p_id}/#{s_type}/#{s_id}"
       node = pathes[p]
       node = new DataNode profile, id, p, verbose unless node?
