@@ -59,3 +59,5 @@ http-forwarder:
       compressed: true
       request_opts: {qs: {token: 'HELLO'}}
 ```
+
+If the reverse proxy (e.g. [Nginx](https://www.nginx.com/)) sits in between public ip and the receiver server, please make sure the reverse proxy can forward HTTP traffics with [OPTIONS](https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/OPTIONS) method to the receiver server.
