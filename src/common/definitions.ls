@@ -69,10 +69,19 @@ const APPEVT_TIME_SERIES_V1_DATA_POINTS = \ts::v1::points
 const APPEVT_TIME_SERIES_V3_MEASUREMENTS = \ts::v3::measurements
 
 
+const WEBAPI_UPLOAD_ARCHIVE_MULTIPART_FIELD = \sensor_data_gz
+
+
+const THE_END = \END
+
 
 const constants = {
   APPEVT_TIME_SERIES_V1_DATA_POINTS,
-  APPEVT_TIME_SERIES_V3_MEASUREMENTS
+  APPEVT_TIME_SERIES_V3_MEASUREMENTS,
+
+  WEBAPI_UPLOAD_ARCHIVE_MULTIPART_FIELD,
+
+  THE_END
 }
 
 module.exports = exports = {constants}

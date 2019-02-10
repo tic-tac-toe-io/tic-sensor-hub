@@ -11,14 +11,14 @@ var ys = require('yapps-server');
 
 /**
  * The entire startup process of a typical application based
- * on yapps-server (YS): 
- * 
+ * on yapps-server (YS):
+ *
  * 1. master process calls YS.bootstrap() with designated options
  * 2. master process adds plugins to yapps-server in the callback of bootstrap
  * 3. master process calls YS.start() to start load-balance service
  * 4. master process forks several worker processes
  * 5. each worker process calls YS.bootstrap() with designated options
- * 6. each worker process add express/socket.io middlewares in the callback 
+ * 6. each worker process add express/socket.io middlewares in the callback
  *    of bootstrap
  * 7. each worker process calls YS.start() and starts express web server
  *    to listen 0.0.0.0:0
@@ -34,7 +34,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
     /**
      * Write codes here to manipulate yapps-server instance before
      * starting the web service. Here are supported manipulations:
-     * 
+     *
      *  - add plugin
      *  - add REST api endpoints
      *  - configure server's runtime behaviors
@@ -48,6 +48,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
          */
         master.addPlugin(require('./src/routes/webapi-legacy'));
         master.addPlugin(require('./src/routes/webapi-hooks'));
+        master.addPlugin(require('./src/routes/webapi-upload'));
         master.addPlugin(require('./src/transforms/1to3'));
         master.addPlugin(require('./src/brokers/http-forwarder'));
         /**
@@ -65,7 +66,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
         /**
          * Configure worker app (web) here...
          */
-        
+
 
         /**
          * Inform master process that worker process is fully configured, and

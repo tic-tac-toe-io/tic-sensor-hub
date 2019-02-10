@@ -9,16 +9,12 @@ moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
 {APPEVT_TIME_SERIES_V1_DATA_POINTS} = constants
+{funcs} = require \../common/webapi-helpers
+{NG} = funcs
 
 
 DEFAULT_SETTINGS =
   enabled: no
-
-
-NG = (message, code, status-code, req, res) ->
-  url = req.originalUrl
-  result = {url, code, message}
-  return res.status status-code .json result
 
 
 PROCESS_EMPTY_DATA = (id, profile, originalname, req, res) ->

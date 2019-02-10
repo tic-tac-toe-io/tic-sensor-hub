@@ -4,26 +4,32 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path zlib express]>
+require! <[path zlib express lodash]>
 moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
 {APPEVT_TIME_SERIES_V3_MEASUREMENTS} = constants
+{funcs} = require \../common/webapi-helpers
+{NG} = funcs
 
 
-NG = (message, code, status-code, req, res) ->
-  url = req.originalUrl
-  result = {url, code, message}
-  return res.status status-code .json result
+DEFAULT_SETTINGS =
+  enabled: no
 
 
 module.exports = exports =
   name: \webapi-hooks
 
   attach: (name, environment, configs, helpers) ->
+    module.configs = lodash.merge {}, DEFAULT_SETTINGS, configs
     return <[web]>
 
   init: (p, done) ->
+    {configs} = module
+    {enabled} = configs
+    if not enabled
+      WARN "disabled!!"
+      return done!
     {web} = app = @
     {REST_ERR, REST_DAT, UPLOAD} = web.get_rest_helpers!
     hook = new express!

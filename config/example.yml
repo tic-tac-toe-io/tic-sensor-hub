@@ -35,6 +35,24 @@ webapi-legacy:
 
 
 #
+# REST api endpoint to receive sensor data from HTTP forwarder of another
+# instance of SensorHub.
+#
+webapi-hook:
+  enabled: true
+
+
+#
+# REST api endpoint to receive sensor data archive from devices with TOE3.0+.
+#
+webapi-upload:
+  enabled: true
+  # When timezone is not specified in query string, use this setting
+  # as default value.
+  timezone: Asia/Taipei
+
+
+#
 # Use `request` module to forward Time-series data points (measurements) to
 # next http server. There are 2 ways of using HTTP POST to send these data
 # points to next http server:
