@@ -6,6 +6,7 @@
 #
 
 require! <[lodash]>
+{DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {Dictionary, TagSet, FieldSet, Measurement, IndexingList} = require \./utils
 
 
@@ -22,7 +23,7 @@ GET_TIMESTAMP_ANCHOR = (timestamps) ->
   return timestamps[0]
 
 MSG_WITH_ZERO = (message) ->
-  console.log message
+  INFO message
   return 0
 
 
@@ -48,9 +49,9 @@ class Parser
 
   calculate-time-delta: (boots, epoch-anchor, global-anchor=null) ->
     {id} = self = @
-    # console.log "boots: #{boots}"
-    # console.log "epoch-anchor: #{JSON.stringify epoch-anchor}"
-    # console.log "global-anchor: #{JSON.stringify global-anchor}"
+    # DBG "boots: #{boots}"
+    # DBG "epoch-anchor: #{JSON.stringify epoch-anchor}"
+    # DBG "global-anchor: #{JSON.stringify global-anchor}"
     return MSG_WITH_ZERO "[#{id}] missing boots" unless boots? and boots > 0
     return MSG_WITH_ZERO "[#{id}] missing global-anchor" unless global-anchor?
     return MSG_WITH_ZERO "[#{id}] missing global-anchor.boots" unless global-anchor.boots? and global-anchor.boots > 0
@@ -62,7 +63,7 @@ class Parser
     return MSG_WITH_ZERO "[#{id}] missing global-anchor.now" unless global-anchor.now? and global-anchor.now > 0
     delta = global-anchor.now - global-anchor.epoch
     return MSG_WITH_ZERO "[#{id}] calibration < 10s" unless (Math.abs delta) > 10s * 1000ms
-    console.log "#{id}: needs time calibration => #{delta}ms (local: #{global-anchor.epoch}, global: #{global-anchor.now})"
+    INFO "#{id}: needs time calibration => #{delta}ms (local: #{global-anchor.epoch}, global: #{global-anchor.now})"
     return delta
 
 

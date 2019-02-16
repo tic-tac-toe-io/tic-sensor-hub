@@ -101,13 +101,14 @@ module.exports = exports =
       global-anchor = {boots, uptime, epoch, now}
       timezone = module.configs.timezone unless timezone?
       size-text = "#{size}"
-      INFO "TIC3-DG: #{profile.cyan}/#{id.yellow}/#{originalname.green} => #{timezone}, #{boots}/#{uptime}/#{epoch}, #{size-text.magenta} bytes"
+      prefix = "/api/v3/upload: #{profile.cyan}/#{id.yellow}[#{originalname.green}] =>"
+      INFO "#{prefix} #{timezone}, #{boots}/#{uptime}/#{epoch}, #{size-text.magenta} bytes"
       return HANDLE_EMPTY_FILE profile, id, originalname, req, res if size is 0
       (zerr, raw) <- zlib.gunzip buffer
       return HANDLE_INVALID_ARCHIVE profile, id, originalname, zerr, req, res if zerr?
       raw-size = raw.length
       text = raw.toString!
-      INFO "TIC3-DG: #{profile.cyan}/#{id.yellow}/#{originalname.green} => decompress to #{raw-size.toString!.magenta} bytes"
+      INFO "#{prefix} decompress to #{raw-size.toString!.magenta} bytes"
       try
         json = JSON.parse text
       catch error
@@ -124,8 +125,8 @@ module.exports = exports =
       transformed = (new Date!).valueOf!
       num_of_points = json.data.points.length
       num_of_measurements = measurements.length
-      return INFO "TIC3-DG: #{profile.cyan}/#{id.yellow}/#{originalname.green} => ignore because of no measurements" if num_of_measurements is 0
-      measured = measurements[0][0].epoch
+      return INFO "#{prefix} ignore because of no measurements" if num_of_measurements is 0
+      measured = measurements[0][0]
       delta = now - epoch
       filename = originalname
       compressed-size = size
@@ -136,7 +137,67 @@ module.exports = exports =
         upload: {filename, compressed-size, raw-size}
         timestamps: {measured, received, transformed, delta}
 
-    # ua.post '/:profile/:id/:type', (UPLOAD.single \archive)
+
+    ua.post '/:profile/:id/:type', (UPLOAD.single \archive), (req, res) ->
+      {query, headers, ip, params, file} = req
+      # INFO "query => #{JSON.stringify query}"
+      # INFO "headers => #{JSON.stringify headers}"
+      # INFO "params => #{JSON.stringify params}"
+      boots = query['_boots']
+      uptime = query['_uptime']
+      epoch = query['_epoch']
+      timezone = headers['x-toe-timezone']
+      toe-app = headers['x-toe-app']
+      toe-app-version = headers['x-toe-app-version']
+      {profile, id, type} = params
+      return NG "invalid file upload form", -1, 400, req, res unless file?
+      {fieldname, originalname, size, buffer} = file
+      return NG "missing archive field in http form", -1, 400, req, res unless fieldname is \archive
+      now = (new Date!).valueOf!
+      boots = parse-int boots
+      boots = 0 if boots is NaN
+      uptime = parse-int uptime
+      uptime = 0 if uptime is NaN
+      epoch = parse-int epoch
+      epoch = 0 if epoch is NaN
+      global-anchor = {boots, uptime, epoch, now}
+      timezone = "Asia/Taipei" unless timezone?
+      size-text = "#{size}"
+      prefix = "/api/v3/upload-archive: #{profile.cyan}/#{id.yellow}/#{type.gray}[#{originalname.green}] =>"
+      INFO "#{prefix} #{timezone}, #{boots}/#{uptime}/#{epoch}, #{size-text.magenta} bytes"
+      return HANDLE_EMPTY_FILE profile, id, originalname, req, res if size is 0
+      (zerr, raw) <- zlib.gunzip buffer
+      return HANDLE_INVALID_ARCHIVE profile, id, originalname, zerr, req, res if zerr?
+      raw-size = raw.length
+      x = "#{raw-size}"
+      text = raw.toString!
+      INFO "#{prefix} decompress to #{x.magenta} bytes"
+      try
+        json = JSON.parse text
+      catch error
+        return HANDLE_INVALID_JSON_FORMAT profile, id, originalname, error, req, res
+      try
+        parser = new PARSER {}
+        parser.parse json, global-anchor
+        measurements = parser.to-ttt yes
+        parser = null
+      catch error
+        return HANDLE_INVALID_DATA_FORMAT profile, id, originalname, error, req, res
+      res.status 200 .json { code: 0, message: null, result: {}, configs: configs }
+      received = now
+      transformed = (new Date!).valueOf!
+      num_of_points = json.data.points.length
+      num_of_measurements = measurements.length
+      return INFO "#{prefix} ignore because of no measurements" if num_of_measurements is 0
+      measured = measurements[0][0]
+      delta = now - epoch
+      filename = originalname
+      compressed-size = size
+      return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, do
+        source: \toe3-upload
+        upload: {filename, compressed-size, raw-size}
+        timestamps: {measured, received, transformed, delta}
+
 
     web.use-api \upload, up           # for early-version of TOE3
     web.use-api \upload-archive, ua   # official api endpoint to receive time-series sensor data archive

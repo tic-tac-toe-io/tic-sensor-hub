@@ -124,7 +124,8 @@ class Measurement
     xs = [ {data_type: (field-set.get i), value: v} for let v, i in value-set ]
     return {timestamp, p_type, p_id, s_type, s_id, xs} unless array
     xs = { [(field-set.get i), v] for let v, i in value-set }
-    return [timestamp, p_type, p_id, s_type, s_id, xs]
+    {epoch} = timestamp
+    return [epoch, p_type, p_id, s_type, s_id, xs]
 
 
 

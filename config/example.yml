@@ -76,7 +76,7 @@ http-forwarder:
       enabled: true
       url: http://localhost:9998/x/y/z
       compressed: true
-      matched_profiles: 'foop'
+      matched_profiles: '^(foop|conscious)$'
       matched_ids: '*'
       health_check: false
       url_append: true
