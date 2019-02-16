@@ -23,7 +23,7 @@ GET_TIMESTAMP_ANCHOR = (timestamps) ->
   return timestamps[0]
 
 MSG_WITH_ZERO = (message) ->
-  INFO message
+  DBG message
   return 0
 
 

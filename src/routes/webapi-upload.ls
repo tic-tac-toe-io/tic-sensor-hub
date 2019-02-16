@@ -11,7 +11,7 @@ moment = require \moment-timezone
 {APPEVT_TIME_SERIES_V3_MEASUREMENTS, WEBAPI_UPLOAD_ARCHIVE_MULTIPART_FIELD} = constants
 {funcs} = require \../common/webapi-helpers
 {NG} = funcs
-PARSER = require \../parsers/toe3-json7-parser
+PARSER = require \../parsers/toe3-json7
 
 
 DEFAULT_SETTINGS =
