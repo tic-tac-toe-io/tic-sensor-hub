@@ -133,7 +133,7 @@ module.exports = exports =
       # metadata = {size, raw-size, delta, ip, num_of_measurements, num_of_points}
       # context = {timezone, uptime, epoch, boots, timestamps}
       return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, do
-        source: \toe3-upload
+        source: \toe3-upload-alpha
         upload: {filename, compressed-size, raw-size}
         timestamps: {measured, received, transformed, delta}
 
