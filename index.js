@@ -50,6 +50,7 @@ ys.bootstrap(opts, (berr, logger, master=null, web=null) => {
         master.addPlugin(require('./src/routes/webapi-hooks'));
         master.addPlugin(require('./src/routes/webapi-upload'));
         master.addPlugin(require('./src/transforms/1to3'));
+        master.addPlugin(require('./src/brokers/broker-manager'));
         master.addPlugin(require('./src/brokers/http-forwarder'));
         /**
          * Start service in the process of master app.

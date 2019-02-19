@@ -93,3 +93,88 @@ http-forwarder:
       url_append: true
       request_opts:
         qs: {token: 'XXX'}
+
+
+broker-manager:
+  verbose: false
+  destinations:
+    test0:
+      type: filesystem
+      enabled: true
+      behaviors:
+        health_check: false
+        queue_if_unavailable: false
+      filter:
+        matched_profiles: '*'
+        matched_ids: '*'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      broker:
+        path: "{{work_dir}}/web/brokers/test0"
+        flush_threashold: 2
+
+    test1:
+      type: influxdb-1x-writer
+      enabled: false
+      behaviors:
+        health_check: false
+        queue_if_unavailable: false
+      filter:
+        matched_profiles: '*'
+        matched_ids: '*'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      broker:
+        url: http://localhost:8086
+        username: root
+        password: root
+
+    test2:
+      type: http-forwarder
+      enabled: false
+      behaviors:
+        health_check: false
+        queue_if_unavailable: false
+      filter:
+        matched_profiles: '*'
+        matched_ids: '*'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      broker:
+        url: http://localhost:9999/a/b/c
+        compressed: false
+        url_append: false
+
+
+
+
+
+#
+# Implement LINE-protocol (https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/)
+# to write time-series data to InfluxDB v1.x, and also uses stats api (https://docs.influxdata.com/influxdb/v1.7/administration/server_monitoring/#show-stats)
+# to check destination's health.
+#
+influxdb-1x-writer:
+  verbose: false
+  destinations:
+    - name: test1
+      enabled: true
+      url: http://localhost:8086
+      filter:
+        matched_profiles: '*'
+        matched_ids: '1803S320005[0-9]'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      health_check: true
+      opts: {}
+
+    - name: test2
+      enabled: false
+      url: https://ifdb991.cestec.jp
+      filter:
+        matched_profiles: '*'
+        matched_ids: '1803S320005[0-9]'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      health_check: true
+      opts: {}

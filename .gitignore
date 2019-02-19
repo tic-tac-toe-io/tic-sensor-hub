@@ -62,3 +62,6 @@ typings/
 
 # external dependencies
 /externals
+
+# working directory, to be ignored.
+/work
