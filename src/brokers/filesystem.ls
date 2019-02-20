@@ -37,9 +37,10 @@ class DataPack
 
   flush: ->
     {broker, data, profile, id} = self = @
-    {dir} = broker
+    {dir, environment} = broker
+    {process_name} = environment
     now = moment!
-    filename = "#{profile}-#{id}-#{now.valueOf!}.json"
+    filename = "#{profile}-#{id}-#{process_name}-#{now.valueOf!}.csv"
     filepath = "#{dir}/#{now.format 'YYYYMMDD-HH'}/#{filename}"
     xs = [ d.measurements for d in data ]
     xs = lodash.flatten xs
