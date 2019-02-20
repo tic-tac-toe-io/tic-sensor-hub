@@ -38,7 +38,7 @@ webapi-legacy:
 # REST api endpoint to receive sensor data from HTTP forwarder of another
 # instance of SensorHub.
 #
-webapi-hook:
+webapi-hooks:
   enabled: true
 
 
