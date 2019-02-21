@@ -58,9 +58,6 @@ class Filesystem extends Broker
   (@parent, @environment, @helpers, configs) ->
     @defaults = DEFAULTS
     super ...
-    {PRETTIZE_KVS} = helpers
-    INFO "environment: #{PRETTIZE_KVS environment}"
-    INFO "configs: #{PRETTIZE_KVS @configs}"
     @dir = @configs['path']
     @flush_threashold = @configs['flush_threashold']
     @caches = {}

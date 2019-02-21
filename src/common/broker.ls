@@ -14,6 +14,9 @@ class Broker
     @configs = lodash.merge {}, @defaults, configs
     {prefix} = parent
     @prefix = prefix
+    # INFO "#{prefix} environment => #{helpers.PRETTIZE_KVS @environment}"
+    INFO "#{prefix} configs => #{helpers.PRETTIZE_KVS @configs}"
+    @verbose = @configs['verbose']
     return
 
   init: (done) ->

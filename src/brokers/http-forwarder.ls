@@ -4,24 +4,19 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path zlib]> # builtin
+require! <[path zlib]>
 require! <[async lodash request]>
+moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
-{constants} = require \../common/definitions
-{APPEVT_TIME_SERIES_V1_DATA_POINTS, APPEVT_TIME_SERIES_V3_MEASUREMENTS} = constants
+{Broker} = require \../common/broker
 
-const FORWARDER_DEFAULT_OPTIONS =
-  name: 'unknown'
-  enabled: no
+const DEFAULTS =
   url: null
+  url_appending: no
   compressed: no
-  health_check: no
-  url_append: no
-  matched_profiles: '.*'
-  matched_ids: '.*'
+  health_checking_timeout: 10s
+  data_forwarding_timeout: 30s
   request_opts: {}
-
-const DEFAULT_HEALTH_CHECK_PERIOD = 60s
 
 
 class DataPack
@@ -42,83 +37,54 @@ class DataPack
     return done null, z
 
 
-class Forwarder
-  (@manager, @opts, @verbose) ->
-    {name, url, compressed, health_check, matched_profiles, matched_ids} = @opts = lodash.merge {}, FORWARDER_DEFAULT_OPTIONS, opts
-    @name = name
-    @prefix = "forwarders[#{name.cyan}]"
+class HttpForwarder extends Broker
+  (@parent, @environment, @helpers, configs) ->
+    @defaults = DEFAULTS
+    super ...
+    {url, url_appending, compressed, health_checking_timeout, data_forwarding_timeout, request_opts} = @configs
     @url = url
+    @url_appending = url_appending
     @compressed = compressed
-    @compressed = no unless @compressed? and \boolean is typeof @compressed
-    @health-check = health_check
-    @health-check = no unless @health-check? and \boolean is typeof @health-check
-    @health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
-    @health-checking = no
-    @healthy = if @health-check then no else yes
-    matched_profiles = '.*' unless matched_profiles? and \string is typeof matched_profiles
-    matched_profiles = '.*' if matched_profiles is \*
-    matched_ids = '.*' unless matched_ids? and \string is typeof matched_ids
-    matched_ids = '.*' if matched_ids is \*
-    @profile-matcher = if matched_profiles is \.* then null else new RegExp matched_profiles
-    @id-matcher = if matched_ids is \.* then null else new RegExp matched_ids
+    @request_opts = request_opts
+    @health_checking_timeout = health_checking_timeout
+    @data_forwarding_timeout = data_forwarding_timeout
     return
 
-  init: (done) ->
-    {prefix, url} = self = @
-    return done "missing url in options" unless url?
-    return done "expects url as `string` but #{typeof url}" unless \string is typeof url
-    INFO "#{prefix}: initialized. (url: #{url.magenta})"
-    f = -> return self.at-check!
-    self.timer = setInterval f, 1000ms
-    self.health-check-timeout = 0
-    self.at-health-check!
-    return done!
-
-  at-health-check: ->
-    {prefix, url, health-check, health-check-timeout, healthy, health-checking} = self = @
-    return unless health-check
-    return if health-checking
-    self.health-check-timeout = health-check-timeout - 1
-    return if health-check-timeout > 0
-    timeout = DEFAULT_HEALTH_CHECK_PERIOD .>>. 1
-    timeout = 10 if timeout < 10
-    timeout = timeout * 1000ms
+  check-health: (done) ->
+    {prefix, url, url_appending, data_forwarding_timeout} = self = @
+    timeout = data_forwarding_timeout
     method = \OPTIONS
     opts = {url, method, timeout}
     INFO "#{prefix}: checking healthy... (#{JSON.stringify opts})"
-    self.health-checking = yes
     (err, rsp, body) <- request opts
-    self.health-checking = no
-    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
-    return WARN "#{prefix}: using OPTIONS to check #{url}, but failed: #{err}" if err?
-    return WARN "#{prefix}: using OPTIONS to check #{url}, but failed with non-200 response: #{rsp.statusCode} (#{rsp.statusMessage.red})" unless rsp.statusCode is 200
-    self.healthy = yes
-    return INFO "#{prefix}: using OPTIONS to check #{url} and success"
+    if err?
+      WARN err, "#{prefix}: using OPTIONS to check #{url}, but failed"
+      return done err, no
+    else if rsp.statusCode isnt 200
+      WARN "#{prefix}: using OPTIONS to check #{url}, but failed with non-200 response: #{rsp.statusCode} (#{rsp.statusMessage.red})"
+      return done null, no
+    else
+      INFO "#{prefix}: using OPTIONS to check #{url} and success"
+      return done null, yes
 
-  at-check: ->
-    @.at-health-check!
-    return
+  init: (done) ->
+    {url} = self = @
+    return done "missing url in http-forwarder broker configs" unless url? and \string is typeof url
+    return done!
 
-  forward: (pack, done) ->
-    {prefix, compressed, url, opts, verbose, healthy, profile-matcher, id-matcher} = self = @
-    {profile, id, measurements, context} = pack
-    # INFO "testing #{profile}, #{profile-matcher.test profile}" if profile-matcher?
-    # INFO "testing #{id}, #{id-matcher.test id}" if id-matcher?
-    return DBG "#{prefix}: drop #{profile}/#{id} because of profile mismatch" if profile-matcher? and (not profile-matcher.test profile)
-    return DBG "#{prefix}: drop #{profile}/#{id} because of id mismatch" if id-matcher? and not id-matcher.test id
-    timestamp = context.timestamps.measured
-    if not healthy
-      DBG "#{prefix}: #{url.gray} is not healthy to forward #{profile}/#{id}/#{timestamp}"
-      return done!
+  proceed: (profile, id, measurements, context, done) ->
+    {prefix, verbose, url, url_appending, compressed, request_opts} = self = @
     num_of_measurements = "#{measurements.length}"
+    timestamp = context.timestamps.measured
     method = \POST
     qs = {profile, id, timestamp}
-    delete qs['profile'] if opts.url_append
-    delete qs['id'] if opts.url_append
-    url = "#{url}/#{profile}/#{id}" if opts.url_append
+    delete qs['profile'] if url_appending
+    delete qs['id'] if url_appending
+    url = "#{url}/#{profile}/#{id}" if url_appending
     json = if compressed then no else yes
     c = if compressed then "json.gz" else "json"
-    opts = lodash.merge {}, opts.request_opts, {method, json, url, qs}
+    opts = lodash.merge {}, request_opts, {method, json, url, qs}
+    pack = new DataPack profile, id, measurements, context
     (pack-err, data) <- pack.get-data compressed
     return done pack-err if pack-err?
     {ratio} = pack
@@ -133,60 +99,15 @@ class Forwarder
       opts['body'] = data
       opts['headers'] = {'content-type': 'application/json'}
     (http-err, rsp, body) <- request opts
-    return self.at-forward-ng done, "failed to send #{profile}/#{id}/#{timestamp} data to #{url} => #{http-err}" if http-err?
-    return self.at-forward-ng done, "failed to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})" unless rsp.statusCode is 200
-    INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
-    return self.at-forward-ok done
-
-  at-forward-ng: (callback, err) ->
-    {health-check} = self = @
-    return callback err unless health-check
-    self.healthy = no
-    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
-    return callback err
-
-  at-forward-ok: (callback) ->
-    self = @
-    self.healthy = yes
-    self.health-check-timeout = DEFAULT_HEALTH_CHECK_PERIOD
-    return callback!
+    if http-err?
+      ERR http-err, "#{prefix} fails to send #{profile}/#{id}/#{timestamp} data to #{url} => (#{http-err})"
+      return done http-err
+    else if rsp.statusCode isnt 200
+      ERR "#{prefix} fails to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})"
+      return done "non-200-response"
+    else
+      INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
+      return done!
 
 
-class ForwardManager
-  (@environment, @configs, @helpers, @app) ->
-    self = @
-    self.verbose = configs.verbose
-    self.verbose = no unless \boolean is typeof self.verbose
-    self.forwarders = [ (new Forwarder self, d, self.verbose) for d in configs.destinations when d.enabled? and d.enabled ]
-    return
-
-  init: (done) ->
-    {app, forwarders} = self = @
-    app.on APPEVT_TIME_SERIES_V3_MEASUREMENTS, -> self.at-ts-v3-measurements.apply self, arguments
-    iterator = (f, cb) -> return f.init cb
-    return async.eachSeries forwarders, iterator, done
-
-  at-ts-v3-measurements: (profile, id, measurements, context) ->
-    {forwarders} = self = @
-    pack = new DataPack profile, id, measurements, context
-    for f in forwarders
-      (err) <- f.forward pack
-      ERR err, "forwarding failure" if err?
-    return
-
-
-
-module.exports = exports =
-  name: \http-forwarder
-
-  attach: (name, environment, configs, helpers) ->
-    app = @
-    broker = app[name] = new ForwardManager environment, configs, helpers, app
-    return null
-
-  init: (p, done) ->
-    return p.init done
-
-  fini: (p, done) ->
-    return done!
-
+module.exports = exports = HttpForwarder

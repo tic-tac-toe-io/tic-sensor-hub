@@ -99,10 +99,12 @@ broker-manager:
   verbose: false
   destinations:
     test0:
-      type: filesystem
+      type: file
       enabled: true
+      verbose: false
       behaviors:
         health_check: false
+        health_check_period: 60
         queue_if_unavailable: false
       filter:
         matched_profiles: '*'
@@ -114,8 +116,31 @@ broker-manager:
         flush_threashold: 2
 
     test1:
+      type: http
+      enabled: true
+      verbose: false
+      behaviors:
+        health_check: true
+        health_check_period: 60
+        queue_if_unavailable: false
+      filter:
+        matched_profiles: '*'
+        matched_ids: '*'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      broker:
+        url: http://localhost:9998/x/y/z
+        url_appending: true
+        compressed: true
+        health_checking_timeout: 5
+        data_forwarding_timeout: 30
+        request_opts:
+          qs: {token: 'XXX'}
+
+    test2:
       type: influxdb-1x-writer
       enabled: false
+      verbose: false
       behaviors:
         health_check: false
         queue_if_unavailable: false
@@ -128,23 +153,6 @@ broker-manager:
         url: http://localhost:8086
         username: root
         password: root
-
-    test2:
-      type: http-forwarder
-      enabled: false
-      behaviors:
-        health_check: false
-        queue_if_unavailable: false
-      filter:
-        matched_profiles: '*'
-        matched_ids: '*'
-        matched_peripheral_types: '*'
-        matched_sensor_types: '*'
-      broker:
-        url: http://localhost:9999/a/b/c
-        compressed: false
-        url_append: false
-
 
 
 
