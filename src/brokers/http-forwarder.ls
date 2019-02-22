@@ -14,6 +14,7 @@ const DEFAULTS =
   url: null
   url_appending: no
   compressed: no
+  snapshot: no
   health_checking_timeout: 10s
   data_forwarding_timeout: 30s
   request_opts: {}
@@ -41,10 +42,11 @@ class HttpForwarder extends Broker
   (@parent, @environment, @helpers, configs) ->
     @defaults = DEFAULTS
     super ...
-    {url, url_appending, compressed, health_checking_timeout, data_forwarding_timeout, request_opts} = @configs
+    {url, url_appending, compressed, snapshot, health_checking_timeout, data_forwarding_timeout, request_opts} = @configs
     @url = url
     @url_appending = url_appending
     @compressed = compressed
+    @snapshot = snapshot
     @request_opts = request_opts
     @health_checking_timeout = health_checking_timeout
     @data_forwarding_timeout = data_forwarding_timeout
@@ -55,16 +57,16 @@ class HttpForwarder extends Broker
     timeout = data_forwarding_timeout
     method = \OPTIONS
     opts = {url, method, timeout}
-    INFO "#{prefix}: checking healthy... (#{JSON.stringify opts})"
+    INFO "#{prefix} checking healthy... (#{JSON.stringify opts})"
     (err, rsp, body) <- request opts
     if err?
-      WARN err, "#{prefix}: using OPTIONS to check #{url}, but failed"
+      WARN err, "#{prefix} using OPTIONS to check #{url}, but failed"
       return done err, no
     else if rsp.statusCode isnt 200
-      WARN "#{prefix}: using OPTIONS to check #{url}, but failed with non-200 response: #{rsp.statusCode} (#{rsp.statusMessage.red})"
+      WARN "#{prefix} using OPTIONS to check #{url}, but failed with non-200 response: #{rsp.statusCode} (#{rsp.statusMessage.red})"
       return done null, no
     else
-      INFO "#{prefix}: using OPTIONS to check #{url} and success"
+      INFO "#{prefix} using OPTIONS to check #{url} and success"
       return done null, yes
 
   init: (done) ->
@@ -72,9 +74,24 @@ class HttpForwarder extends Broker
     return done "missing url in http-forwarder broker configs" unless url? and \string is typeof url
     return done!
 
+  transform: (measurements) ->
+    {prefix, snapshot} = self = @
+    return measurements unless snapshot
+    zs = measurements.length
+    return measurements if zs is 0
+    self.caches = {}
+    for m in measurements
+      [timestamp, p_type, p_id, s_type, s_id, kv] = m
+      key = "#{p_type}/#{p_id}/#{s_type}/#{s_id}"
+      self.caches[key] = m
+    xs = [ m for key, m of self.caches ]
+    INFO "#{prefix} reduce #{zs} measurements to #{xs.length} for snapshot transformation" unless xs.length is zs
+    return xs
+
   proceed: (profile, id, measurements, context, done) ->
     {prefix, verbose, url, url_appending, compressed, request_opts} = self = @
-    num_of_measurements = "#{measurements.length}"
+    xs = self.transform measurements
+    num_of_measurements = "#{xs.length}"
     timestamp = context.timestamps.measured
     method = \POST
     qs = {profile, id, timestamp}
@@ -84,7 +101,7 @@ class HttpForwarder extends Broker
     json = if compressed then no else yes
     c = if compressed then "json.gz" else "json"
     opts = lodash.merge {}, request_opts, {method, json, url, qs}
-    pack = new DataPack profile, id, measurements, context
+    pack = new DataPack profile, id, xs, context
     (pack-err, data) <- pack.get-data compressed
     return done pack-err if pack-err?
     {ratio} = pack
@@ -106,7 +123,7 @@ class HttpForwarder extends Broker
       ERR "#{prefix} fails to send #{profile}/#{id}/#{timestamp} data to #{url} because of non-200 response code: #{rsp.statusCode} (#{rsp.statusMessage})"
       return done "non-200-response"
     else
-      INFO "#{prefix}: #{profile}/#{id}/#{timestamp}: forward #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
+      INFO "#{prefix} forward #{profile}/#{id}/#{timestamp} - #{num_of_measurements.magenta} measurements (#{c}) successfully (#{bytes.blue} bytes)" if verbose
       return done!
 
 
