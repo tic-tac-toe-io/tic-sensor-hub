@@ -32,6 +32,7 @@ LOAD_BROKER_CLASS = (type, done) ->
   try
     clazz = require \./filesystem if type is \file
     clazz = require \./http-forwarder if type is \http
+    clazz = require \./ifdb-1x-writer if type is \ifdb
   catch error
     return done error
   return done null, clazz if clazz?

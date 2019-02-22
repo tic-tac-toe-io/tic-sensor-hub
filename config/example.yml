@@ -61,7 +61,7 @@ broker-manager:
   destinations:
     test0:
       type: file
-      enabled: true
+      enabled: false
       verbose: false
       behaviors:
         health_check: false
@@ -78,7 +78,7 @@ broker-manager:
 
     test1:
       type: http
-      enabled: true
+      enabled: false
       verbose: false
       behaviors:
         health_check: true
@@ -100,11 +100,12 @@ broker-manager:
           qs: {token: 'XXX'}
 
     test2:
-      type: influxdb-1x-writer
+      type: ifdb
       enabled: false
-      verbose: false
+      verbose: true
       behaviors:
-        health_check: false
+        health_check: true
+        health_check_period: 60
         queue_if_unavailable: false
       filter:
         matched_profiles: '*'
@@ -115,6 +116,8 @@ broker-manager:
         url: http://localhost:8086
         username: root
         password: root
+        health_checking_timeout: 5
+        data_writing_timeout: 30
 
 
 

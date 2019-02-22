@@ -16,7 +16,8 @@
   "dependencies": {
     "yapps-server": "tic-tac-toe-io/yapps-server",
     "request": "*",
-    "moment-timezone": "*"
+    "moment-timezone": "*",
+    "influx": "*"
   },
   "devDependencies": {},
   "optionalDependencies": {}

@@ -38,6 +38,7 @@ dependencies:
   \yapps-server : \tic-tac-toe-io/yapps-server
   \request : \*
   \moment-timezone : \*
+  \influx : \*
 
 devDependencies: {}
 
