@@ -53,48 +53,9 @@ webapi-upload:
 
 
 #
-# Use `request` module to forward Time-series data points (measurements) to
-# next http server. There are 2 ways of using HTTP POST to send these data
-# points to next http server:
+# Broker Manager, that manages multiple instances of brokers with different types.
 #
-# 1. Send as HTTP body in JSON format without GZ compression.
-# 2. Send sa a JSON file in HTTP Form (multiparts) with GZ compression.
 #
-http-forwarder:
-  verbose: false
-  destinations:
-    - name: test1
-      enabled: false
-      url: http://localhost:9999/a/b/c
-      compressed: false
-      health_check: false
-      url_append: false
-      request_opts:
-        auth: {user: 'aaa', password: 'bbbb'}
-
-    - name: test2
-      enabled: true
-      url: http://localhost:9998/x/y/z
-      compressed: true
-      matched_profiles: '^(foop|conscious)$'
-      matched_ids: '*'
-      health_check: false
-      url_append: true
-      request_opts:
-        qs: {token: 'XXX'}
-
-    - name: test3
-      enabled: false
-      url: http://localhost:9998/x/y/z
-      compressed: true
-      matched_profiles: '*'
-      matched_ids: '1803S320005[0-9]'
-      health_check: true
-      url_append: true
-      request_opts:
-        qs: {token: 'XXX'}
-
-
 broker-manager:
   verbose: false
   destinations:
@@ -132,6 +93,7 @@ broker-manager:
         url: http://localhost:9998/x/y/z
         url_appending: true
         compressed: true
+        snapshot: false
         health_checking_timeout: 5
         data_forwarding_timeout: 30
         request_opts:
@@ -153,7 +115,6 @@ broker-manager:
         url: http://localhost:8086
         username: root
         password: root
-
 
 
 

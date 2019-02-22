@@ -157,7 +157,8 @@ class DecoratedBroker
     return if proceeding # [todo] Needs to implement queue, also implement health check.
     xs = df.filter profile, id, measurements, context
     return INFO "#{prefix} drop #{profile}/#{id} #{measurements.length} measurements because of mismatch" if xs.length is 0
-    INFO "#{prefix} proceeds #{xs.length} measurements (reduced from #{measurements.length})"
+    comments = if xs.length is measurements.length then "" else "(reduced from #{measurements.length})"
+    INFO "#{prefix} proceeds #{xs.length} measurements #{comments}"
     self.proceeding = yes
     (err) <- broker.proceed profile, id, xs, context
     self.proceeding = no

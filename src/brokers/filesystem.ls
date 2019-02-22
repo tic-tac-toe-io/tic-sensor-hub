@@ -12,7 +12,7 @@ moment = require \moment-timezone
 
 const DEFAULTS =
   path: \/tmp
-  flush_threashold: 3
+  flush_threashold: 20
 
 
 SERIALIZE_MEASUREMENT = (m) ->
