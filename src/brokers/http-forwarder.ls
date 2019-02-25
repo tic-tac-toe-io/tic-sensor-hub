@@ -53,8 +53,8 @@ class HttpForwarder extends Broker
     return
 
   check-health: (done) ->
-    {prefix, url, url_appending, data_forwarding_timeout} = self = @
-    timeout = data_forwarding_timeout
+    {prefix, url, url_appending, health_checking_timeout} = self = @
+    timeout = health_checking_timeout * 1000ms
     method = \OPTIONS
     opts = {url, method, timeout}
     INFO "#{prefix} checking healthy... (#{JSON.stringify opts})"
@@ -89,10 +89,11 @@ class HttpForwarder extends Broker
     return xs
 
   proceed: (profile, id, measurements, context, done) ->
-    {prefix, verbose, url, url_appending, compressed, request_opts} = self = @
+    {prefix, verbose, url, url_appending, compressed, request_opts, data_forwarding_timeout} = self = @
     xs = self.transform measurements
     num_of_measurements = "#{xs.length}"
     timestamp = context.timestamps.measured
+    timeout = data_forwarding_timeout * 1000ms
     method = \POST
     qs = {profile, id, timestamp}
     delete qs['profile'] if url_appending
@@ -100,7 +101,7 @@ class HttpForwarder extends Broker
     url = "#{url}/#{profile}/#{id}" if url_appending
     json = if compressed then no else yes
     c = if compressed then "json.gz" else "json"
-    opts = lodash.merge {}, request_opts, {method, json, url, qs}
+    opts = lodash.merge {}, request_opts, {method, json, url, qs, timeout}
     pack = new DataPack profile, id, xs, context
     (pack-err, data) <- pack.get-data compressed
     return done pack-err if pack-err?
