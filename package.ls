@@ -26,7 +26,7 @@ author:
 
 description: 'Hub for sensor data collection'
 
-version: \0.1.0
+version: \0.2.0
 
 repository:
   type: \git
