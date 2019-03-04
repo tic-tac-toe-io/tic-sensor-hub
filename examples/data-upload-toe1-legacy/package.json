@@ -1,0 +1,22 @@
+{
+  "name": "data-upload-toe1-legacy",
+  "author": {
+    "name": "Yagamy Huang",
+    "email": "yagamy@t2t.io"
+  },
+  "description": "An example to upload sensor data to SensorHub with TOE1 legacy format",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index",
+  "dependencies": {
+    "request": "*",
+    "moment-timezone": "*",
+    "colors": "*",
+    "prettyjson": "*"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
