@@ -118,3 +118,8 @@ To run this example to submit data to SensorHub running on the TicTacToe cloud, 
 ```bash
 $ SENSOR_HUB=https://hub.tic-tac-toe.io node ./index.js
 ```
+
+
+## Todo
+
+- [] docker compose to run SensorHub, InfluxDB, Grafana on the same local machine
