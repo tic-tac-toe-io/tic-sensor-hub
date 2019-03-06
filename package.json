@@ -15,7 +15,7 @@
   "main": "index",
   "license": "MIT",
   "dependencies": {
-    "yapps-server": "@tic-tac-toe/yapps-server",
+    "@tic-tac-toe/yapps-server": "*",
     "request": "*",
     "moment-timezone": "*",
     "influx": "*"
