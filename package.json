@@ -7,14 +7,15 @@
     "email": "yagamy@t2t.io"
   },
   "description": "Hub for sensor data collection",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": ""
   },
   "main": "index",
+  "license": "MIT",
   "dependencies": {
-    "yapps-server": "tic-tac-toe-io/yapps-server",
+    "yapps-server": "@tic-tac-toe-io/yapps-server",
     "request": "*",
     "moment-timezone": "*",
     "influx": "*"

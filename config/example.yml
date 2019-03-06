@@ -101,7 +101,7 @@ broker-manager:
 
     test2:
       type: ifdb
-      enabled: false
+      enabled: true
       verbose: true
       behaviors:
         health_check: true
