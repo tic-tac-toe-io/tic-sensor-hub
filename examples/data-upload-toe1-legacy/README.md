@@ -119,6 +119,21 @@ To run this example to submit data to SensorHub running on the TicTacToe cloud, 
 $ SENSOR_HUB=https://hub.tic-tac-toe.io node ./index.js
 ```
 
+Or, you can consider to run SensorHub, TSDB (influxdb 1.7), Dashboard (Grafana 6.0) on your local machine with Docker:
+
+```bash
+# run 3 services with Docker Compose
+#
+$ docker-compose up
+
+# open another terminal, and change to same directory:
+#
+$ SENSOR_HUB=http://localhost:7000 node ./index.js
+
+# open browser, and visit http://localhost:3000/d/b8ZebvCmk/connectivity-stats
+# with user `admin` and password `t2tisawesome`.
+```
+
 
 ## Todo
 

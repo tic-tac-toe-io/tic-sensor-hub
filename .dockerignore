@@ -1,0 +1,7 @@
+# Nodejs
+*/*/node_modules
+/node_modules
+
+# App-specific
+*/*/work
+/logs

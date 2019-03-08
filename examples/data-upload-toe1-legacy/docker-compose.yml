@@ -1,0 +1,25 @@
+version: '3'
+services:
+  tsdb:
+    image: influxdb:1.7.4-alpine
+    environment:
+      INFLUXDB_DB: sandbox
+    ports: 
+      - 8086:8086
+
+  dashboard:
+    image: grafana/grafana:6.0.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: t2tisawesome
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    ports: 
+      - 3000:3000
+
+  hub:
+    image: tictactoe/tic-sensor-hub:latest
+    volumes: 
+      - ./docker/tic-sensor-hub/config/default.yml:/tic/config/default.yml
+    ports:
+      - 7000:7000
+

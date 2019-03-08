@@ -1,0 +1,366 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "sandbox",
+      "decimals": null,
+      "fill": 1,
+      "gridPos": {
+        "h": 16,
+        "w": 18,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "interval": "",
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "paceLength": 10,
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "$0 => $tag_peripheral_id ($col)",
+          "groupBy": [
+            {
+              "params": [
+                "peripheral_id"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "sensor_id"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "grandia.connectivity.timestamps",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "dns"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "connection"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "ssl"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "server"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "transfer"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "peripheral_id",
+              "operator": "=",
+              "value": "google"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Connectivity Stats (www.google.com)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": null,
+          "format": "ms",
+          "label": "",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": true,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "sandbox",
+      "fill": 1,
+      "gridPos": {
+        "h": 16,
+        "w": 18,
+        "x": 0,
+        "y": 16
+      },
+      "id": 3,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": true,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": false,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "paceLength": 10,
+      "percentage": false,
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "stack": true,
+      "steppedLine": false,
+      "targets": [
+        {
+          "alias": "$0 => $tag_peripheral_id ($col)",
+          "groupBy": [
+            {
+              "params": [
+                "peripheral_id"
+              ],
+              "type": "tag"
+            },
+            {
+              "params": [
+                "sensor_id"
+              ],
+              "type": "tag"
+            }
+          ],
+          "measurement": "grandia.connectivity.timestamps",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "dns"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "connection"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "ssl"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "server"
+                ],
+                "type": "field"
+              }
+            ],
+            [
+              {
+                "params": [
+                  "transfer"
+                ],
+                "type": "field"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "peripheral_id",
+              "operator": "=",
+              "value": "facebook"
+            }
+          ]
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Connectivity Stats (www.facebook.com)",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "ms",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 18,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "",
+  "title": "Connectivity Stats",
+  "uid": "b8ZebvCmk",
+  "version": 1
+}
