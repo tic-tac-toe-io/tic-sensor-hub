@@ -70,22 +70,47 @@ module.exports = exports =
 
   attach: (name, environment, configs, helpers) ->
     module.configs = lodash.merge {}, DEFAULT_SETTINGS, configs
+    module.helpers = helpers
     return <[web]>
 
   init: (p, done) ->
-    {configs} = module
+    {configs, helpers} = module
     {enabled} = configs
     if not enabled
       WARN "disabled!!"
       return done!
     {web} = app = @
     {REST_ERR, REST_DAT, UPLOAD} = web.get_rest_helpers!
+    {PRETTIZE_KVS} = helpers
 
     up = new express!
     ua = new express!
 
+    up.post '/:profile/:id/:p_type/:p_id/:s_type/:s_id', (req, res) ->
+      received = now = Date.now!
+      {params, query, ip, body} = req
+      {profile, id, p_type, p_id, s_type, s_id} = params
+      {epoch} = query
+      epoch = received unless epoch?
+      epoch = parseInt epoch if \string is typeof epoch
+      measured = epoch
+      m = [epoch, p_type, p_id, s_type, s_id, body]
+      measurements = [m]
+      compressed-size = raw-size = (JSON.stringify measurements).length
+      filename = \unknown
+      transformed = Date.now!
+      delta = now - epoch
+      prefix = "/api/v3/upload: #{profile.cyan}/#{id.yellow}/#{p_type}/#{p_id}/#{s_type}/#{s_id} =>"
+      res.status 200 .json { code: 0, message: null, result: {}, configs: configs }
+      INFO "#{prefix} #{PRETTIZE_KVS body}"
+      return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, do
+        source: \standard-upload-lv4
+        upload: {filename, compressed-size, raw-size}
+        timestamps: {measured, received, transformed, delta}
+
+
     up.post '/:profile/:id', (UPLOAD.single WEBAPI_UPLOAD_ARCHIVE_MULTIPART_FIELD), (req, res) ->
-      {file, params, query, headers, ip} = req
+      {file, params, query, ip} = req
       {timezone, uptime, epoch, boots} = query
       {profile, id} = params
       return NG "invalid file upload form", -1, 400, req, res unless file?

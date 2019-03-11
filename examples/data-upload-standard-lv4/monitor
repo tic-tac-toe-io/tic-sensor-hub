@@ -1,0 +1,30 @@
+#!/bin/bash
+#
+
+function initialize_variables {
+	[ "" == "${URL}" ] && export URL="https://www.google.com"
+	[ "" == "${SITE}" ] && export SITE="google"
+	[ "" == "${SENSOR_HUB}" ] && export SENSOR_HUB="http://localhost:7000"
+	[ "" == "${PROFILE}" ] && export PROFILE="sandbox"
+	[ "" == "${ID}" ] && export ID=$(hostname)
+
+	[ "" == "$(which curl)" ] && echo "missing curl, please install" && exit 1
+	[ "" == "$(which http)" ] && echo "missing httpie, please install" && exit 1
+}
+
+function run {
+	while true; do
+		curl \
+			-w '{"namelookup": %{time_namelookup},"connect": %{time_connect},"appconnect": %{time_appconnect},"pretransfer": %{time_pretransfer},"redirect": %{time_redirect},"starttransfer": %{time_starttransfer},"total": %{time_total}}' \
+			-D /tmp/tmpbYHj0P \
+			-o '/tmp/tmpmjeMeW' \
+			-s \
+			-S ${URL} \
+			| http -v ${SENSOR_HUB}/api/v3/upload/${PROFILE}/${ID}/connectivity/internet/curl/${SITE}
+		sleep 3
+	done
+}
+
+
+initialize_variables
+run $@

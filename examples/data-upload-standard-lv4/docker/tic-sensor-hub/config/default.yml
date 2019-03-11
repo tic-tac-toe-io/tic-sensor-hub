@@ -1,0 +1,81 @@
+
+#
+# Web (expressjs) settings.
+#
+web:
+  port: 7000
+  api: [3, 1]
+  upload_storage: memory
+  upload_path: "{{work_dir}}/web/upload/{{process_name}}"
+
+#
+# DO NOT USE any handlebars template variables (e.g. process_name) in logger
+# section because they are never merged.
+#
+logger:
+  rotating_file_stream:
+    period: daily
+    threshold: 1g     # The maximum size for a log file to reach before it's rotated.
+    totalFiles: 60    # Keep 60 days (2 months) of log files.
+
+
+#
+# Transform from DGv1 schema (board_type/board_id/sensor: type) to
+# DGv3 schema (p_type/p_id/s_type/s_id: {type1, type2, ...})
+#
+1to3:
+  verbose: false
+
+
+#
+# Legacy REST api for TOE v1.0: `/api/v1/hub/:id/:profile` (POST)
+#
+webapi-legacy:
+  enabled: true
+
+
+#
+# REST api endpoint to receive sensor data from HTTP forwarder of another
+# instance of SensorHub.
+#
+webapi-hooks:
+  enabled: false
+
+
+#
+# REST api endpoint to receive sensor data archive from devices with TOE3.0+.
+#
+webapi-upload:
+  enabled: true
+  # When timezone is not specified in query string, use this setting
+  # as default value.
+  timezone: Asia/Taipei
+
+
+#
+# Broker Manager, that manages multiple instances of brokers with different types.
+#
+#
+broker-manager:
+  verbose: false
+  destinations:
+    tsdb:
+      type: ifdb
+      enabled: true
+      verbose: true
+      behaviors:
+        health_check: true
+        health_check_period: 60
+        queue_if_unavailable: false
+      filter:
+        matched_profiles: 'sandbox'
+        matched_ids: '*'
+        matched_peripheral_types: '*'
+        matched_sensor_types: '*'
+      broker:
+        url: http://tsdb:8086
+        username: root
+        password: root
+        health_checking_timeout: 5
+        data_writing_timeout: 30
+
