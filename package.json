@@ -16,9 +16,11 @@
   "license": "MIT",
   "dependencies": {
     "@tic-tac-toe/yapps-server": "*",
-    "request": "*",
+    "influx": "*",
     "moment-timezone": "*",
-    "influx": "*"
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0",
+    "request": "*"
   },
   "devDependencies": {},
   "optionalDependencies": {}

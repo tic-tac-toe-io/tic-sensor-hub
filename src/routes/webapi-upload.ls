@@ -4,7 +4,9 @@
 # https://tic-tac-toe.io
 # Taipei, Taiwan
 #
-require! <[path zlib express lodash]>
+require! <[path zlib express lodash request crypto]>
+require! <[passport]>
+{BasicStrategy} = require \passport-http
 moment = require \moment-timezone
 {DBG, ERR, WARN, INFO} = global.ys.services.get_module_logger __filename
 {constants} = require \../common/definitions
@@ -17,6 +19,11 @@ PARSER = require \../parsers/toe3-json7
 DEFAULT_SETTINGS =
   enabled: no
   timezone: \Asia/Taipei
+  misc:
+    dm:
+      server: \https://tic-dm.t2t.io
+      user: \misc
+      pass: \misc
 
 
 HANDLE_EMPTY_FILE = (profile, id, originalname, req, res) ->
@@ -86,7 +93,40 @@ module.exports = exports =
     up = new express!
     ua = new express!
 
-    up.post '/:profile/:id/:p_type/:p_id/:s_type/:s_id', (req, res) ->
+    strategy = new BasicStrategy (userid, password, done) ->
+      INFO "basic-auth: user: #{userid.yellow}, password: #{password.green}"
+      [client, profile, id] = userid.split '/'
+      return done "missing client" unless client?
+      return done "missing profile" unless profile?
+      return done "missing id" unless id?
+      return done null, {userid, profile, id, client} unless profile is \player
+      {dm} = configs.misc
+      {server, user, pass} = dm
+      # INFO "auth: dms => #{PRETTIZE_KVS dm}"
+      url = "#{server}/api/v3/nodes/#{profile}/find/identity/match/#{id}"
+      auth = {user, pass}
+      opts = {url, auth}
+      (err, rsp, body) <- request.get opts
+      if err?
+        ERR err, "#{url} => failed to search node by given identity"
+        return done "failed to search node by given identity #{id}, #{err}"
+      else if rsp.statusCode isnt 200
+        ERR "#{url} => failed to search node with identity, non-200 response: #{rsp.statusCode}"
+        return done "failed to search node with identity, non-200 response: #{rsp.statusCode}"
+      else
+        json = JSON.parse body
+        {identity, token, serial_number} = json.data[0]
+        hash = ((crypto.createHmac 'sha256', token).update serial_number .digest 'hex').to-upper-case!
+        id = identity
+        INFO "id: #{id}, token: #{token.yellow}, hash: #{hash.red}"
+        return done null, {userid, profile, id, client} if password.length is 16 and password is hash.substring 0, 16
+        return done null, {userid, profile, id, client} if password.length is 32 and password is hash.substring 0, 32
+        return done "hash mismatched: #{hash}, #{password}"
+
+    passport.use strategy
+
+
+    up.post '/:profile/:id/:p_type/:p_id/:s_type/:s_id', (passport.authenticate \basic, {session: no}), (req, res) ->
       received = now = Date.now!
       {params, query, ip, body} = req
       {profile, id, p_type, p_id, s_type, s_id} = params

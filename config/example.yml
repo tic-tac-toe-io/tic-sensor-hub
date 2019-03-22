@@ -50,6 +50,12 @@ webapi-upload:
   # When timezone is not specified in query string, use this setting
   # as default value.
   timezone: Asia/Taipei
+  misc:
+    dm:
+      server: https://tic-dm.t2t.io
+      user: misc
+      pass: misc
+
 
 
 #
@@ -119,34 +125,3 @@ broker-manager:
         health_checking_timeout: 5
         data_writing_timeout: 30
 
-
-
-#
-# Implement LINE-protocol (https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/)
-# to write time-series data to InfluxDB v1.x, and also uses stats api (https://docs.influxdata.com/influxdb/v1.7/administration/server_monitoring/#show-stats)
-# to check destination's health.
-#
-influxdb-1x-writer:
-  verbose: false
-  destinations:
-    - name: test1
-      enabled: true
-      url: http://localhost:8086
-      filter:
-        matched_profiles: '*'
-        matched_ids: '1803S320005[0-9]'
-        matched_peripheral_types: '*'
-        matched_sensor_types: '*'
-      health_check: true
-      opts: {}
-
-    - name: test2
-      enabled: false
-      url: https://ifdb991.cestec.jp
-      filter:
-        matched_profiles: '*'
-        matched_ids: '1803S320005[0-9]'
-        matched_peripheral_types: '*'
-        matched_sensor_types: '*'
-      health_check: true
-      opts: {}

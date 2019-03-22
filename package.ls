@@ -41,6 +41,8 @@ dependencies:
   \request : \*
   \moment-timezone : \*
   \influx : \*
+  \passport : \*
+  \passport-http : \*
 
 devDependencies: {}
 

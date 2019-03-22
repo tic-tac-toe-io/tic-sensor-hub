@@ -1,7 +1,7 @@
 
 # data-upload-standard-lv4
 
-The example demonstrates uploading sensor data to SensorHub with simple JSON POST, and using BASH to implement monitor script.
+The example demonstrates uploading sensor data to SensorHub with simple JSON POST `POST /api/v3/upload/:profile/:id/:p_type/:p_id/:s_type/:s_id`, and using BASH to implement monitor script.
 
 
 ## Example Code
