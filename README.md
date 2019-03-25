@@ -47,4 +47,6 @@ SensorHub supports HTTP Forwarder broker that uses HTTP POST with JSON body to f
 - [x] docker image for SensorHub
 - [x] docker compose to run SensorHub, InfluxDB, Grafana on the same local machine
 - [] replace bunyan with [pino](https://getpino.io/#/) which is more lightweight
-- [] improve the security of standard data upload (lv4) with api token (basic auth)
+- [x] improve the security of standard data upload (lv4) with api token (basic auth)
+- [] improve basic auth performance with caches, for the standard data upload api
+- [] allow sandbox with basic auth (default password), but other profile with real password from sha256 hash

@@ -1,3 +1,7 @@
+### 0.4.1
+
+- add basic auth to upload api
+
 ### 0.4.0
 
 - Support upload standard api (lv4), and add one bash script `monitor` as example
