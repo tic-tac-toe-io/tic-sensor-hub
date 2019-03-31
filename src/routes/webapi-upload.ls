@@ -141,7 +141,7 @@ module.exports = exports =
       transformed = Date.now!
       delta = now - epoch
       prefix = "/api/v3/upload: #{profile.cyan}/#{id.yellow}/#{p_type}/#{p_id}/#{s_type}/#{s_id} =>"
-      res.status 200 .json { code: 0, message: null, result: {}, configs: configs }
+      res.status 200 .json { code: 0, message: null, result: {}, configs: {} }
       INFO "#{prefix} #{PRETTIZE_KVS body}"
       return app.emit APPEVT_TIME_SERIES_V3_MEASUREMENTS, profile, id, measurements, do
         source: \standard-upload-lv4
@@ -185,7 +185,7 @@ module.exports = exports =
         parser = null
       catch error
         return HANDLE_INVALID_DATA_FORMAT profile, id, originalname, error, req, res
-      res.status 200 .json { code: 0, message: null, result: {}, configs: configs }
+      res.status 200 .json { code: 0, message: null, result: {}, configs: {} }
       received = now
       transformed = (new Date!).valueOf!
       num_of_points = json.data.points.length
@@ -248,7 +248,7 @@ module.exports = exports =
         parser = null
       catch error
         return HANDLE_INVALID_DATA_FORMAT profile, id, originalname, error, req, res
-      res.status 200 .json { code: 0, message: null, result: {}, configs: configs }
+      res.status 200 .json { code: 0, message: null, result: {}, configs: {} }
       received = now
       transformed = (new Date!).valueOf!
       num_of_points = json.data.points.length
