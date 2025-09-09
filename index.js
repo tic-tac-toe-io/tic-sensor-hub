@@ -7,7 +7,7 @@ const opts = {
 
 // Write codes here before bootstrapping yapps-server module.
 //
-var ys = require('@tic-tac-toe/yapps-server');
+var ys = require('./lib/yapps-server');
 
 /**
  * The entire startup process of a typical application based
